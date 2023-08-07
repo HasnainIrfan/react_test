@@ -1,10 +1,12 @@
+import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
-import MkdSDK from "../utils/MkdSDK";
 import { useNavigate } from "react-router-dom";
+import * as yup from "yup";
 import { AuthContext } from "../authContext";
+import Input from "../components/input";
+import { GlobalContext } from "../globalContext";
+import MkdSDK from "../utils/MkdSDK";
 
 const AdminLoginPage = () => {
   const schema = yup
@@ -14,20 +16,49 @@ const AdminLoginPage = () => {
     })
     .required();
 
+  const { dispatch: patch } = React.useContext(GlobalContext);
+
   const { dispatch } = React.useContext(AuthContext);
   const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
-    setError,
+    reset,
     formState: { errors },
   } = useForm({
+    mode: "onTouched",
     resolver: yupResolver(schema),
   });
 
   const onSubmit = async (data) => {
     let sdk = new MkdSDK();
-    //TODO
+    try {
+      const res = await sdk.login(data.email, data.password, "admin");
+
+      if (!res.error) {
+        localStorage.setItem("role", JSON.stringify(res.role));
+
+        dispatch({
+          type: "LOGIN",
+          payload: {
+            user: res.user_id,
+            token: res.token,
+            role: res.role,
+          },
+        });
+
+        navigate("/admin/dashboard");
+
+        patch({
+          type: "SNACKBAR",
+          payload: { message: "LOGIN SUCCESSFUL" },
+        });
+      }
+    } catch (e) {
+      console.log(e);
+    }
+    reset();
   };
 
   return (
@@ -43,15 +74,18 @@ const AdminLoginPage = () => {
           >
             Email
           </label>
-          <input
-            type="email"
-            placeholder="Email"
-            {...register("email")}
-            className={`"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
-              errors.email?.message ? "border-red-500" : ""
-            }`}
+          <Input
+            label="email"
+            register={register}
+            name="Email"
+            check={{
+              required: "Email is Required",
+              pattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+            }}
+            type="text"
+            placeholder="Your Email"
+            errors={errors}
           />
-          <p className="text-red-500 text-xs italic">{errors.email?.message}</p>
         </div>
 
         <div className="mb-6">
@@ -61,17 +95,17 @@ const AdminLoginPage = () => {
           >
             Password
           </label>
-          <input
+          <Input
+            placeholder="password"
+            label="password"
+            name="Password"
             type="password"
-            placeholder="******************"
-            {...register("password")}
-            className={`shadow appearance-none border  rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline ${
-              errors.password?.message ? "border-red-500" : ""
-            }`}
+            check={{
+              required: "Password is Required",
+            }}
+            errors={errors}
+            register={register}
           />
-          <p className="text-red-500 text-xs italic">
-            {errors.password?.message}
-          </p>
         </div>
         <div className="flex items-center justify-between">
           <input

@@ -1,0 +1,14 @@
+
+.inputError {
+  color: red;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+.inputActive {
+  border-width: 1px 10px 1px 1px !important;
+  border-style: solid;
+  border-color: rgb(219, 18, 88) rgb(191, 22, 80) rgb(191, 22, 80)
+    rgb(236, 89, 144) !important ;
+  background: rgb(251, 236, 236) !important;
+}
